@@ -1,11 +1,12 @@
 body {
     font-family: Arial;
     text-align: center;
+    margin: 0;
 }
 
 #results {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 15px;
     padding: 20px;
 }

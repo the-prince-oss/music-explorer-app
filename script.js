@@ -1,44 +1,110 @@
-async function searchMusic() {
-    const query = document.getElementById("searchInput").value;
+let allSongs = [];
 
+// FETCH
+async function fetchMusic() {
+    const query = document.getElementById("searchInput").value.trim();
     if (!query) return;
 
-    const loading = document.getElementById("loading");
-    loading.style.display = "block";
-
-    const url = `https://itunes.apple.com/search?term=${query}&limit=10`;
+    document.getElementById("loading").style.display = "block";
 
     try {
-        const response = await fetch(url);
-        const data = await response.json();
+        const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=20`;
+        console.log("Fetching:", url);
 
-        displayResults(data.results);
-    } catch (error) {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        console.log("DATA:", data);
+
+        allSongs = data.results || [];
+
+        populateGenres();
+        updateView();
+    } catch (e) {
+        console.error(e);
         alert("Error fetching data");
     }
 
-    loading.style.display = "none";
+    document.getElementById("loading").style.display = "none";
 }
 
-function displayResults(songs) {
-    const resultsDiv = document.getElementById("results");
-    resultsDiv.innerHTML = "";
+// GENRES
+function populateGenres() {
+    const genres = [...new Set(allSongs.map(s => s.primaryGenreName).filter(Boolean))];
+    const dropdown = document.getElementById("genreFilter");
 
-    if (songs.length === 0) {
-        resultsDiv.innerHTML = "<p>No results found</p>";
+    dropdown.innerHTML = '<option value="">All Genres</option>';
+
+    genres.forEach(g => {
+        const opt = document.createElement("option");
+        opt.value = g;
+        opt.textContent = g;
+        dropdown.appendChild(opt);
+    });
+}
+
+// MAIN LOGIC
+function updateView() {
+    let temp = [...allSongs];
+
+    const search = document.getElementById("searchInput").value.toLowerCase();
+    const genre = document.getElementById("genreFilter").value;
+    const sort = document.getElementById("sortOption").value;
+
+    // SEARCH
+    if (search) {
+        temp = temp.filter(song =>
+            (song.trackName || "").toLowerCase().includes(search)
+        );
+    }
+
+    // FILTER
+    if (genre) {
+        temp = temp.filter(song =>
+            song.primaryGenreName === genre
+        );
+    }
+
+    // SORT
+    if (sort === "alpha") {
+        temp.sort((a, b) =>
+            (a.trackName || "").localeCompare(b.trackName || "")
+        );
+    } else if (sort === "date") {
+        temp.sort((a, b) =>
+            new Date(b.releaseDate) - new Date(a.releaseDate)
+        );
+    }
+
+    render(temp);
+}
+
+// RENDER
+function render(songs) {
+    const container = document.getElementById("results");
+    container.innerHTML = "";
+
+    if (!songs || songs.length === 0) {
+        container.innerHTML = "<p>No results found</p>";
         return;
     }
 
     songs.forEach(song => {
-        const div = document.createElement("div");
-        div.classList.add("card");
+        const card = document.createElement("div");
+        card.classList.add("card");
 
-        div.innerHTML = `
-            <img src="${song.artworkUrl100}">
-            <h3>${song.trackName}</h3>
-            <p>${song.artistName}</p>
+        card.innerHTML = `
+            <img src="${song.artworkUrl100 || ''}">
+            <h3>${song.trackName || "No Name"}</h3>
+            <p>${song.artistName || "Unknown Artist"}</p>
+            <p>${song.primaryGenreName || ""}</p>
         `;
 
-        resultsDiv.appendChild(div);
+        container.appendChild(card);
     });
 }
+
+// EVENTS
+document.getElementById("searchInput").addEventListener("input", updateView);
+document.getElementById("genreFilter").addEventListener("change", updateView);
+document.getElementById("sortOption").addEventListener("change", updateView);

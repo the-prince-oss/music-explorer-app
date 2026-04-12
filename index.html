@@ -9,7 +9,18 @@
     <h1>🎧 Music Explorer</h1>
 
     <input type="text" id="searchInput" placeholder="Search songs...">
-    <button onclick="searchMusic()">Search</button>
+
+    <select id="genreFilter">
+        <option value="">All Genres</option>
+    </select>
+
+    <select id="sortOption">
+        <option value="">Sort</option>
+        <option value="alpha">A-Z</option>
+        <option value="date">Latest</option>
+    </select>
+
+    <button onclick="fetchMusic()">Search</button>
 
     <p id="loading" style="display:none;">Loading...</p>
 
